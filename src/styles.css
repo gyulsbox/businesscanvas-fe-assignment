@@ -1,10 +1,27 @@
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css");
+
 @layer theme, base, antd, components, utilities;
 
 @import "tailwindcss";
 
+@layer components {
+  .text-body {
+    @apply font-normal text-sm leading-[22px] tracking-normal;
+  }
+
+  .text-body-semibold {
+    @apply font-semibold text-sm leading-[22px] tracking-normal;
+  }
+
+  .text-title {
+    @apply font-semibold text-base leading-6 tracking-normal;
+  }
+}
+
+
 body {
   @apply m-0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+  font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
     "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
     sans-serif;
   -webkit-font-smoothing: antialiased;
