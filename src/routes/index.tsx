@@ -4,7 +4,6 @@ import { Button, Checkbox, Dropdown, Flex, Table, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useMemo, useState } from 'react'
 import { MoreOutlined, PlusOutlined } from '@ant-design/icons'
-import { StyleProvider } from '@ant-design/cssinjs'
 import { useModal } from '@/hooks/useModal.ts'
 import { MemberFormModal } from '@/components/memberFormModal'
 import dayjs from 'dayjs'
@@ -327,62 +326,60 @@ function App() {
   const allColumns = [...baseColumnsWithoutAction, actionColumn]
 
   return (
-    <StyleProvider layer>
-      <>
-        <MemberFormModal
-          isModalOpen={isModalOpen}
-          closeModal={() => {
-            closeModal()
-            setEditingRecord(null)
+    <>
+      <MemberFormModal
+        isModalOpen={isModalOpen}
+        closeModal={() => {
+          closeModal()
+          setEditingRecord(null)
+          setEditingKey(null)
+        }}
+        customFields={customFields}
+        onSubmit={(data) => {
+          if (editingKey) {
+            // 수정 모드
+            updateRecord(editingKey, data)
             setEditingKey(null)
-          }}
-          customFields={customFields}
-          onSubmit={(data) => {
-            if (editingKey) {
-              // 수정 모드
-              handleUpdateRecord(editingKey, data)
-              setEditingKey(null)
-              setEditingRecord(null)
-            } else {
-              // 추가 모드
-              handleAddRecord(data)
-            }
-          }}
-          initialData={
-            editingRecord
-              ? {
-                  ...editingRecord,
-                  joinDate: editingRecord.joinDate,
-                }
-              : undefined
+            setEditingRecord(null)
+          } else {
+            // 추가 모드
+            addRecord(data)
           }
-          mode={editingKey ? 'edit' : 'add'}
-        />
-        <div className="w-dvw h-dvh flex flex-col">
-          <Flex
-            align="center"
-            justify="space-between"
-            className="px-3.5 h-12 w-full"
+        }}
+        initialData={
+          editingRecord
+            ? {
+                ...editingRecord,
+                joinDate: editingRecord.joinDate,
+              }
+            : undefined
+        }
+        mode={editingKey ? 'edit' : 'add'}
+      />
+      <div className="w-dvw h-dvh flex flex-col">
+        <Flex
+          align="center"
+          justify="space-between"
+          className="px-3.5 h-12 w-full"
+        >
+          <Typography.Text className="text-title">회원 목록</Typography.Text>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            className="text-body"
+            onClick={showModal}
           >
-            <Typography.Text className="text-title">회원 목록</Typography.Text>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              className="text-body"
-              onClick={showModal}
-            >
-              추가
-            </Button>
-          </Flex>
-          <Table
-            rowKey="id"
-            rowSelection={rowSelection}
-            columns={allColumns}
-            dataSource={dataSource}
-            pagination={false}
-          />
-        </div>
-      </>
-    </StyleProvider>
+            추가
+          </Button>
+        </Flex>
+        <Table
+          rowKey="id"
+          rowSelection={rowSelection}
+          columns={allColumns}
+          dataSource={records}
+          pagination={false}
+        />
+      </div>
+    </>
   )
 }
