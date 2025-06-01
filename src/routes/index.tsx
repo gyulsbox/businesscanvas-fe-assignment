@@ -1,22 +1,21 @@
 import { type Record } from '@/types/records.ts'
 import { createFileRoute } from '@tanstack/react-router'
 import { Button, Checkbox, Dropdown, Flex, Table, Typography } from 'antd'
-import { MoreOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
-import { useState, useMemo } from 'react'
-import { PlusOutlined } from '@ant-design/icons'
+import { useMemo, useState } from 'react'
+import { MoreOutlined, PlusOutlined } from '@ant-design/icons'
 import { StyleProvider } from '@ant-design/cssinjs'
 import { useModal } from '@/hooks/useModal.ts'
 import { MemberFormModal } from '@/components/memberFormModal'
 import dayjs from 'dayjs'
 import type { Field } from '@/types/fields.ts'
+import { FilterDropdown } from '@/components/filterDropdown'
 
 export const Route = createFileRoute('/')({
   component: App,
 })
 
 function App() {
-  //이름, 주소, 메모, 가입일, 직업, 이메일 수신 동의
   const [editingKey, setEditingKey] = useState<string | null>(null)
   const [editingRecord, setEditingRecord] = useState<Record | null>(null)
   const { showModal, isModalOpen, closeModal } = useModal()
@@ -45,7 +44,62 @@ function App() {
       },
     ],
     [],
-  ) // 예시이미로 디펜던시 없이 고정
+  )
+
+  const INITIAL_RECORDS: readonly Record[] = [
+    {
+      id: '1',
+      name: 'John Doe',
+      address: '서울 강남구',
+      memo: '외국인',
+      joinDate: new Date('2024-10-02'),
+      job: '개발자',
+      emailConsent: true,
+    },
+    {
+      id: '2',
+      name: 'Foo Bar',
+      address: '서울 서초구',
+      memo: '한국인',
+      joinDate: new Date('2024-10-01'),
+      job: 'PO',
+      emailConsent: false,
+      customFields: {
+        department: '디자인팀',
+      },
+    },
+  ]
+
+  const [dataSource, setDataSource] = useState(INITIAL_RECORDS)
+
+  // 필터링을 위한 고유 값 추출 함수
+  const getColumnFilters = (
+    dataSource: readonly Record[],
+    dataIndex: keyof Record,
+  ) => {
+    const values = dataSource
+      .map((item) => item[dataIndex])
+      .filter(
+        (value, index, self) =>
+          typeof value === 'string' && self.indexOf(value) === index,
+      ) as string[]
+
+    return values.map((value) => ({ text: value, value }))
+  }
+
+  // 이메일 수신 동의 필터 옵션
+  const emailConsentFilters = [
+    { text: '동의', value: 'true' },
+    { text: '미동의', value: 'false' },
+  ]
+
+  // 날짜 필터 옵션 생성 함수
+  const getDateFilterOptions = (dataSource: readonly Record[]) => {
+    return dataSource
+      .map((item) => dayjs(item.joinDate).format('YYYY-MM-DD'))
+      .filter((value, index, self) => self.indexOf(value) === index)
+      .map((date) => ({ text: date, value: date }))
+  }
 
   const columns: ColumnsType<Record> = [
     {
@@ -56,6 +110,13 @@ function App() {
       render: (_, record) => (
         <Typography.Text className="text-body">{record.name}</Typography.Text>
       ),
+      filterDropdown: (props) => (
+        <FilterDropdown
+          {...props}
+          options={getColumnFilters(dataSource, 'name')}
+        />
+      ),
+      onFilter: (value, record) => record.name.includes(value as string),
     },
     {
       title: '주소',
@@ -67,6 +128,13 @@ function App() {
           {record.address}
         </Typography.Text>
       ),
+      filterDropdown: (props) => (
+        <FilterDropdown
+          {...props}
+          options={getColumnFilters(dataSource, 'address')}
+        />
+      ),
+      onFilter: (value, record) => record.address.includes(value as string),
     },
     {
       title: '메모',
@@ -76,6 +144,13 @@ function App() {
       render: (_, record) => (
         <Typography.Text className="text-body">{record.memo}</Typography.Text>
       ),
+      filterDropdown: (props) => (
+        <FilterDropdown
+          {...props}
+          options={getColumnFilters(dataSource, 'memo')}
+        />
+      ),
+      onFilter: (value, record) => record.memo.includes(value as string),
     },
     {
       title: '가입일',
@@ -87,12 +162,25 @@ function App() {
         </Typography.Text>
       ),
       onHeaderCell: () => ({ className: 'text-title' }),
+      // 날짜는 고유값으로 변환 후 필터링
+      filterDropdown: (props) => (
+        <FilterDropdown {...props} options={getDateFilterOptions(dataSource)} />
+      ),
+      onFilter: (value, record) =>
+        dayjs(record.joinDate).format('YYYY-MM-DD') === value,
     },
     {
       title: '직업',
       dataIndex: 'job',
       key: 'job',
       onHeaderCell: () => ({ className: 'text-title' }),
+      filterDropdown: (props) => (
+        <FilterDropdown
+          {...props}
+          options={getColumnFilters(dataSource, 'job')}
+        />
+      ),
+      onFilter: (value, record) => record.job.includes(value as string),
     },
     {
       title: '이메일 수신 동의',
@@ -100,6 +188,10 @@ function App() {
       key: 'emailConsent',
       render: (_, record) => <Checkbox checked={record.emailConsent} />,
       onHeaderCell: () => ({ className: 'text-title' }),
+      filterDropdown: (props) => (
+        <FilterDropdown {...props} options={emailConsentFilters} />
+      ),
+      onFilter: (value, record) => String(record.emailConsent) === value,
     },
     {
       title: '',
@@ -191,32 +283,6 @@ function App() {
   // 최종 컬럼: 기본 컬럼 + 커스텀 컬럼 + 액션 컬럼
   // 커스텀 필드 주석 처리 (커스텀 필드 포함 안 함)
   const allColumns = [...baseColumnsWithoutAction, actionColumn]
-
-  const INITIAL_RECORDS: readonly Record[] = [
-    {
-      id: '1',
-      name: 'John Doe',
-      address: '서울 강남구',
-      memo: '외국인',
-      joinDate: new Date('2024-10-02'),
-      job: '개발자',
-      emailConsent: true,
-    },
-    {
-      id: '2',
-      name: 'Foo Bar',
-      address: '서울 서초구',
-      memo: '한국인',
-      joinDate: new Date('2024-10-01'),
-      job: 'PO',
-      emailConsent: false,
-      customFields: {
-        department: '디자인팀',
-      },
-    },
-  ]
-
-  const [dataSource, setDataSource] = useState(INITIAL_RECORDS)
 
   return (
     <StyleProvider layer>
