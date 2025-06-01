@@ -31,28 +31,33 @@ function App() {
         initialData={editingRecord}
         onSubmit={handleSubmit}
       />
-      <div className="w-dvw h-dvh flex flex-col">
-        <Flex
-          align="center"
-          justify="space-between"
-          className="px-3.5 h-12 w-full"
-        >
-          <Typography.Text className="text-title">회원 목록</Typography.Text>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            className="text-body"
-            onClick={showModal}
+      <Layout className="bg-white">
+        <Layout.Header className="bg-transparent px-3.5 h-12 w-full">
+          <Flex
+            align="center"
+            justify="space-between"
+            className="w-full h-full"
           >
-            추가
-          </Button>
-        </Flex>
-        <MemberTable
-          dataSource={records}
-          onDelete={deleteRecord}
-          onEdit={openEditModal}
-        />
-      </div>
+            <Typography.Text className="text-title">회원 목록</Typography.Text>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              className="text-body"
+              onClick={showModal}
+            >
+              추가
+            </Button>
+          </Flex>
+        </Layout.Header>
+
+        <Layout.Content>
+          <MemberTable
+            dataSource={records}
+            onDelete={deleteRecord}
+            onEdit={openEditModal}
+          />
+        </Layout.Content>
+      </Layout>
     </>
   )
 }
