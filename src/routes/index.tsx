@@ -10,6 +10,7 @@ import { MemberFormModal } from '@/components/memberFormModal'
 import dayjs from 'dayjs'
 import type { Field } from '@/types/fields.ts'
 import { FilterDropdown } from '@/components/filterDropdown'
+import { loadRecords, saveRecords, storageType } from '@/utils/storage'
 
 export const Route = createFileRoute('/')({
   component: App,
@@ -80,7 +81,40 @@ function App() {
     },
   ]
 
-  const [dataSource, setDataSource] = useState(INITIAL_RECORDS)
+  // 로컬 스토리지에서 데이터를 불러오거나 초기 데이터 사용
+  const [dataSource, setDataSource] = useState<Record[]>(() => {
+    // in-memory 모드에서는 초기 데이터 사용
+    if (storageType === 'in-memory') {
+      return [...INITIAL_RECORDS]
+    }
+
+    // local-storage 모드에서는 저장된 데이터가 있으면 그것을, 없으면 초기 데이터 사용
+    const savedRecords = loadRecords()
+    return savedRecords.length > 0 ? savedRecords : [...INITIAL_RECORDS]
+  })
+
+  const saveRecordsHandler = (records: Record[]) => {
+    setDataSource(records)
+    saveRecords(records)
+  }
+
+  // 데이터 관리 핸들러
+  const handleAddRecord = (data: Record) => {
+    const newDataSource = [...dataSource, data]
+    saveRecordsHandler(newDataSource)
+  }
+
+  const handleUpdateRecord = (id: string, data: Partial<Record>) => {
+    const newDataSource = dataSource.map((item) =>
+      item.id === id ? { ...item, ...data, updatedAt: new Date() } : item,
+    )
+    saveRecordsHandler(newDataSource)
+  }
+
+  const handleDeleteRecord = (id: string) => {
+    const newDataSource = dataSource.filter((item) => item.id !== id)
+    saveRecordsHandler(newDataSource)
+  }
 
   // 필터링을 위한 고유 값 추출 함수
   const getColumnFilters = (
@@ -231,9 +265,7 @@ function App() {
                 danger: true,
                 onClick: () => {
                   // 삭제 로직
-                  setDataSource((prev) =>
-                    prev.filter((item) => item.id !== record.id),
-                  )
+                  handleDeleteRecord(record.id)
                 },
               },
             ],
@@ -308,18 +340,12 @@ function App() {
           onSubmit={(data) => {
             if (editingKey) {
               // 수정 모드
-              setDataSource((prev) =>
-                prev.map((item) =>
-                  item.id === editingKey
-                    ? { ...item, ...data, updatedAt: new Date() }
-                    : item,
-                ),
-              )
+              handleUpdateRecord(editingKey, data)
               setEditingKey(null)
               setEditingRecord(null)
             } else {
               // 추가 모드
-              setDataSource((prev) => [...prev, data])
+              handleAddRecord(data)
             }
           }}
           initialData={
