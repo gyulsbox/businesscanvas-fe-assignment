@@ -8,7 +8,7 @@ import {
   type DateFieldConstraints,
   type SelectFieldConstraints,
   type CheckboxFieldConstraints,
-  type Field
+  type Field,
 } from '@/types/fields'
 import dayjs from 'dayjs'
 
@@ -57,8 +57,8 @@ type MemberFormModalProps = {
   isModalOpen: boolean
   closeModal: () => void
   onSubmit?: (data: MemberRecord) => void
-  initialData?: MemberRecord
-  mode?: 'add' | 'edit'
+  initialData: MemberRecord | null
+  mode: 'add' | 'edit'
   customFields?: Field[] // 커스텀 필드 프로퍼티 유지 (추후 활성화를 위해)
 }
 
@@ -67,7 +67,7 @@ export const MemberFormModal = ({
   closeModal,
   onSubmit,
   initialData,
-  mode = 'add'
+  mode = 'add',
   // customFields = [] // 커스텀 필드 비활성화 (임시)
 }: MemberFormModalProps) => {
   const [form] = Form.useForm()
@@ -89,7 +89,7 @@ export const MemberFormModal = ({
     setSubmitting(true)
 
     // values에서 customFields 분리 (있는 경우)
-    const { customFields = {}, ...baseValues } = values;
+    const { customFields = {}, ...baseValues } = values
 
     // 제출용 데이터 새로 생성 (속성이 readonly이미로 새 객체 생성)
     const submitData: MemberRecord = {
@@ -98,14 +98,16 @@ export const MemberFormModal = ({
       name: baseValues.name,
       address: baseValues.address || '',
       memo: baseValues.memo || '',
-      joinDate: baseValues.joinDate ? 
-        (baseValues.joinDate instanceof Date ? baseValues.joinDate : new Date(baseValues.joinDate)) : 
-        new Date(),
+      joinDate: baseValues.joinDate
+        ? baseValues.joinDate instanceof Date
+          ? baseValues.joinDate
+          : new Date(baseValues.joinDate)
+        : new Date(),
       job: baseValues.job || '',
       emailConsent: !!baseValues.emailConsent,
-      
+
       // 커스텀 필드
-      customFields
+      customFields,
     }
 
     if (onSubmit) {
@@ -158,7 +160,7 @@ export const MemberFormModal = ({
             {
               required: FIELD_VALIDATION.name.required,
               message: FIELD_VALIDATION.name.message,
-            }
+            },
           ]}
         >
           <Input placeholder="이름을 입력하세요" className="text-body" />
@@ -235,7 +237,7 @@ export const MemberFormModal = ({
         >
           <Checkbox className="text-body" />
         </Form.Item>
-        
+
         {/* 커스텀 필드 렌더링 - 주석 처리
         {customFields.length > 0 && (
           <div className="mt-4 mb-2">
