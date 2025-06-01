@@ -18,7 +18,17 @@ export const Route = createFileRoute('/')({
 function App() {
   const [editingKey, setEditingKey] = useState<string | null>(null)
   const [editingRecord, setEditingRecord] = useState<Record | null>(null)
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   const { showModal, isModalOpen, closeModal } = useModal()
+
+  // 체크박스 선택 관련 기능
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: (newSelectedRowKeys: React.Key[]) => {
+      setSelectedRowKeys(newSelectedRowKeys)
+    },
+    selections: false,
+  }
 
   // 예시 커스텀 필드 정의 - 실제 서버에서 가져오거나 사용자가 정의하는 방식으로 구현 가능
   // 예시로 부서와 연락처 필드 추가
@@ -339,6 +349,8 @@ function App() {
             </Button>
           </Flex>
           <Table
+            rowKey="id"
+            rowSelection={rowSelection}
             columns={allColumns}
             dataSource={dataSource}
             pagination={false}
