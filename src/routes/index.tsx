@@ -9,7 +9,7 @@ import { MemberFormModal } from '@/components/memberFormModal'
 import dayjs from 'dayjs'
 import type { Field } from '@/types/fields.ts'
 import { FilterDropdown } from '@/components/filterDropdown'
-import { loadRecords, saveRecords, storageType } from '@/utils/storage'
+import { useRecords } from '@/hooks/useRecords.ts'
 
 export const Route = createFileRoute('/')({
   component: App,
@@ -20,6 +20,7 @@ function App() {
   const [editingRecord, setEditingRecord] = useState<Record | null>(null)
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   const { showModal, isModalOpen, closeModal } = useModal()
+  const { records, updateRecord, deleteRecord, addRecord } = useRecords()
 
   // 체크박스 선택 관련 기능
   const rowSelection = {
@@ -55,65 +56,6 @@ function App() {
     ],
     [],
   )
-
-  const INITIAL_RECORDS: readonly Record[] = [
-    {
-      id: '1',
-      name: 'John Doe',
-      address: '서울 강남구',
-      memo: '외국인',
-      joinDate: new Date('2024-10-02'),
-      job: '개발자',
-      emailConsent: true,
-    },
-    {
-      id: '2',
-      name: 'Foo Bar',
-      address: '서울 서초구',
-      memo: '한국인',
-      joinDate: new Date('2024-10-01'),
-      job: 'PO',
-      emailConsent: false,
-      customFields: {
-        department: '디자인팀',
-      },
-    },
-  ]
-
-  // 로컬 스토리지에서 데이터를 불러오거나 초기 데이터 사용
-  const [dataSource, setDataSource] = useState<Record[]>(() => {
-    // in-memory 모드에서는 초기 데이터 사용
-    if (storageType === 'in-memory') {
-      return [...INITIAL_RECORDS]
-    }
-
-    // local-storage 모드에서는 저장된 데이터가 있으면 그것을, 없으면 초기 데이터 사용
-    const savedRecords = loadRecords()
-    return savedRecords.length > 0 ? savedRecords : [...INITIAL_RECORDS]
-  })
-
-  const saveRecordsHandler = (records: Record[]) => {
-    setDataSource(records)
-    saveRecords(records)
-  }
-
-  // 데이터 관리 핸들러
-  const handleAddRecord = (data: Record) => {
-    const newDataSource = [...dataSource, data]
-    saveRecordsHandler(newDataSource)
-  }
-
-  const handleUpdateRecord = (id: string, data: Partial<Record>) => {
-    const newDataSource = dataSource.map((item) =>
-      item.id === id ? { ...item, ...data, updatedAt: new Date() } : item,
-    )
-    saveRecordsHandler(newDataSource)
-  }
-
-  const handleDeleteRecord = (id: string) => {
-    const newDataSource = dataSource.filter((item) => item.id !== id)
-    saveRecordsHandler(newDataSource)
-  }
 
   // 필터링을 위한 고유 값 추출 함수
   const getColumnFilters = (
@@ -156,7 +98,7 @@ function App() {
       filterDropdown: (props) => (
         <FilterDropdown
           {...props}
-          options={getColumnFilters(dataSource, 'name')}
+          options={getColumnFilters(records, 'name')}
         />
       ),
       onFilter: (value, record) => record.name.includes(value as string),
@@ -174,7 +116,7 @@ function App() {
       filterDropdown: (props) => (
         <FilterDropdown
           {...props}
-          options={getColumnFilters(dataSource, 'address')}
+          options={getColumnFilters(records, 'address')}
         />
       ),
       onFilter: (value, record) => record.address.includes(value as string),
@@ -190,7 +132,7 @@ function App() {
       filterDropdown: (props) => (
         <FilterDropdown
           {...props}
-          options={getColumnFilters(dataSource, 'memo')}
+          options={getColumnFilters(records, 'memo')}
         />
       ),
       onFilter: (value, record) => record.memo.includes(value as string),
@@ -207,7 +149,7 @@ function App() {
       onHeaderCell: () => ({ className: 'text-title' }),
       // 날짜는 고유값으로 변환 후 필터링
       filterDropdown: (props) => (
-        <FilterDropdown {...props} options={getDateFilterOptions(dataSource)} />
+        <FilterDropdown {...props} options={getDateFilterOptions(records)} />
       ),
       onFilter: (value, record) =>
         dayjs(record.joinDate).format('YYYY-MM-DD') === value,
@@ -218,10 +160,7 @@ function App() {
       key: 'job',
       onHeaderCell: () => ({ className: 'text-title' }),
       filterDropdown: (props) => (
-        <FilterDropdown
-          {...props}
-          options={getColumnFilters(dataSource, 'job')}
-        />
+        <FilterDropdown {...props} options={getColumnFilters(records, 'job')} />
       ),
       onFilter: (value, record) => record.job.includes(value as string),
     },
@@ -264,7 +203,7 @@ function App() {
                 danger: true,
                 onClick: () => {
                   // 삭제 로직
-                  handleDeleteRecord(record.id)
+                  deleteRecord(record.id)
                 },
               },
             ],
