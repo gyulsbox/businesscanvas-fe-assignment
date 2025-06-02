@@ -10,7 +10,18 @@ import {
   type CheckboxFieldConstraints,
   type Field,
 } from '@/types/fields'
-import dayjs from 'dayjs'
+import dayjs, { Dayjs } from 'dayjs'
+
+// 폼에서 사용하는 값들의 타입 정의
+interface FormValues {
+  name: string
+  address?: string
+  memo?: string
+  joinDate?: Dayjs
+  job?: string
+  emailConsent?: boolean
+  customFields?: { [fieldId: string]: any }
+}
 
 const FIELD_VALIDATION = {
   name: {
@@ -18,38 +29,38 @@ const FIELD_VALIDATION = {
     message: '이름은 필수값입니다.',
     constraints: {
       maxLength: 100,
-    } as TextFieldConstraints,
+    } satisfies TextFieldConstraints,
   },
   address: {
     required: false,
     message: '글자수 20을 초과할 수 없습니다.',
     constraints: {
       maxLength: 20,
-    } as TextFieldConstraints,
+    } satisfies TextFieldConstraints,
   },
   memo: {
     required: false,
     message: '글자수 50을 초과할 수 없습니다.',
     constraints: {
       maxLength: 50,
-    } as TextAreaFieldConstraints,
+    } satisfies TextAreaFieldConstraints,
   },
   joinDate: {
     required: true,
     message: '가입일을 선택해주세요',
-    constraints: {} as DateFieldConstraints,
+    constraints: {} satisfies DateFieldConstraints,
   },
   job: {
     required: false,
     message: '',
     constraints: {
-      options: JOB_OPTIONS as readonly string[],
-    } as SelectFieldConstraints,
+      options: JOB_OPTIONS satisfies readonly string[],
+    } satisfies SelectFieldConstraints,
   },
   emailConsent: {
     required: false,
     message: '',
-    constraints: {} as CheckboxFieldConstraints,
+    constraints: {} satisfies CheckboxFieldConstraints,
   },
 }
 
@@ -68,9 +79,9 @@ export const MemberFormModal = ({
   onSubmit,
   initialData,
   mode = 'add',
-  // customFields = [] // 커스텀 필드 비활성화 (임시)
+  // customFields = []
 }: MemberFormModalProps) => {
-  const [form] = Form.useForm()
+  const [form] = Form.useForm<FormValues>() // 제네릭 타입 추가
   const [submitting, setSubmitting] = useState(false)
 
   // 초기 폼 값 설정
@@ -85,37 +96,31 @@ export const MemberFormModal = ({
     }
   }, [initialData, isModalOpen, mode, form])
 
-  const handleFormSubmit = (values: any) => {
+  // FormValues 타입으로 받아서 MemberRecord로 변환
+  const handleFormSubmit = (values: FormValues) => {
     setSubmitting(true)
 
-    // values에서 customFields 분리 (있는 경우)
-    const { customFields = {}, ...baseValues } = values
+    try {
+      const { customFields = {}, ...baseValues } = values
 
-    // 제출용 데이터 새로 생성 (속성이 readonly이미로 새 객체 생성)
-    const submitData: MemberRecord = {
-      // 기본 필드
-      id: initialData?.id || String(Date.now()),
-      name: baseValues.name,
-      address: baseValues.address || '',
-      memo: baseValues.memo || '',
-      joinDate: baseValues.joinDate
-        ? baseValues.joinDate instanceof Date
-          ? baseValues.joinDate
-          : new Date(baseValues.joinDate)
-        : new Date(),
-      job: baseValues.job || '',
-      emailConsent: !!baseValues.emailConsent,
+      const submitData: MemberRecord = {
+        id: initialData?.id || String(Date.now()),
+        name: baseValues.name,
+        address: baseValues.address || '',
+        memo: baseValues.memo || '',
+        joinDate: baseValues.joinDate?.toDate() || new Date(), // 안전한 옵셀 체이닝
+        job: baseValues.job || '',
+        emailConsent: !!baseValues.emailConsent,
+        customFields,
+      }
 
-      // 커스텀 필드
-      customFields,
+      onSubmit?.(submitData)
+    } catch (error) {
+      console.error('폼 제출 실패:', error)
+    } finally {
+      setSubmitting(false)
+      closeModal()
     }
-
-    if (onSubmit) {
-      onSubmit(submitData)
-    }
-
-    setSubmitting(false)
-    closeModal()
   }
 
   const jobOptions = JOB_OPTIONS.map((option) => ({
@@ -134,7 +139,7 @@ export const MemberFormModal = ({
       }}
       footer={null}
     >
-      <Form
+      <Form<FormValues> // Form에도 제네릭 타입 추가
         form={form}
         layout="vertical"
         requiredMark={false}
@@ -145,7 +150,7 @@ export const MemberFormModal = ({
           name: '',
           address: '',
           memo: '',
-          joinDate: null,
+          joinDate: undefined, // null 대신 undefined
           job: '개발자',
           emailConsent: false,
         }}
@@ -164,7 +169,11 @@ export const MemberFormModal = ({
             },
           ]}
         >
-          <Input data-cy="input-name" placeholder="이름을 입력하세요" className="text-body" />
+          <Input
+            data-cy="input-name"
+            placeholder="이름을 입력하세요"
+            className="text-body"
+          />
         </Form.Item>
 
         <Form.Item
@@ -259,12 +268,10 @@ export const MemberFormModal = ({
           </Button>
           <Form.Item shouldUpdate noStyle>
             {() => {
-              // 필수 필드 값이 있는지 확인
               const nameValue = form.getFieldValue('name')
               const joinDateValue = form.getFieldValue('joinDate')
               const hasRequiredValues = nameValue && joinDateValue
 
-              // 폼 에러 확인
               const hasErrors = form
                 .getFieldsError()
                 .some(({ errors }) => errors.length > 0)
