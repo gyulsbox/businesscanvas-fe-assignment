@@ -17,9 +17,13 @@ export const FilterDropdown = ({
   confirm,
   options,
 }: FilterDropdownComponentProps) => (
-  <div className="p-2">
+  <div className="p-2" data-cy="filter-dropdown-container">
     {options.map((option: FilterOption) => (
-      <div key={option.value} className="py-1">
+      <div
+        key={option.value}
+        className="py-1"
+        data-cy={`filter-option-${option.value}`}
+      >
         <Checkbox
           checked={selectedKeys.includes(option.value)}
           onChange={(e) => {

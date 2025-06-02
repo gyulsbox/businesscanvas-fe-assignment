@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Table } from 'antd'
 import type { Record } from '@/types/records'
 import { TableColumns } from './tableColumns'
+import type { TableRowSelection } from 'antd/es/table/interface'
 
 type MemberTableProps = {
   dataSource: Record[]
@@ -24,10 +25,14 @@ export function MemberTable({
       setSelectedRowKeys(newSelectedRowKeys)
     },
     selections: false, // 기본 드롭다운 비활성화
-  }
+    getCheckboxProps: () => ({
+      className: `selection-checkbox`,
+    }),
+  } satisfies TableRowSelection<Record>
 
   return (
     <Table
+      data-cy="member-table"
       rowSelection={rowSelection}
       dataSource={dataSource}
       columns={columns}

@@ -125,6 +125,7 @@ export const MemberFormModal = ({
 
   return (
     <Modal
+      data-cy="member-form-modal"
       title={mode === 'add' ? '회원 추가' : '회원 정보 수정'}
       open={isModalOpen}
       onCancel={() => {
@@ -163,7 +164,7 @@ export const MemberFormModal = ({
             },
           ]}
         >
-          <Input placeholder="이름을 입력하세요" className="text-body" />
+          <Input data-cy="input-name" placeholder="이름을 입력하세요" className="text-body" />
         </Form.Item>
 
         <Form.Item
@@ -270,6 +271,7 @@ export const MemberFormModal = ({
 
               return (
                 <Button
+                  data-cy="submit-button"
                   type="primary"
                   htmlType="submit"
                   loading={submitting}

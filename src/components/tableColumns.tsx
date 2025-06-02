@@ -32,6 +32,7 @@ export const TableColumns = ({
       ),
       filterDropdown: (props) => (
         <FilterDropdown
+          data-cy="filter-dropdown-name"
           {...props}
           options={getColumnFilters(dataSource, 'name')}
         />
@@ -93,9 +94,10 @@ export const TableColumns = ({
       title: '직업',
       dataIndex: 'job',
       key: 'job',
-      onHeaderCell: () => ({ className: 'text-title' }),
+      onHeaderCell: () => ({ className: 'text-title', 'data-cy': 'column-header-job' }),
       filterDropdown: (props) => (
         <FilterDropdown
+          data-cy="filter-dropdown-job"
           {...props}
           options={getColumnFilters(dataSource, 'job')}
         />
@@ -125,6 +127,7 @@ export const TableColumns = ({
               {
                 key: 'edit',
                 label: '수정',
+                className: 'data-cy-edit-action',
                 onClick: () => onEdit(record),
               },
               {
@@ -134,6 +137,7 @@ export const TableColumns = ({
                 key: 'delete',
                 label: '삭제',
                 danger: true,
+                className: 'data-cy-delete-action',
                 onClick: () => onDelete(record.id),
               },
             ],
@@ -143,6 +147,7 @@ export const TableColumns = ({
           overlayClassName="w-[185px]"
         >
           <Button
+            data-cy={`action-button-${record.id}`}
             type="text"
             icon={<MoreOutlined />}
             className="flex items-center justify-center"

@@ -40,6 +40,7 @@ function App() {
           >
             <Typography.Text className="text-title">회원 목록</Typography.Text>
             <Button
+              data-cy="add-member-button"
               type="primary"
               icon={<PlusOutlined />}
               className="text-body"
